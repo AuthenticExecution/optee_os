@@ -12,4 +12,6 @@ srcs-$(CFG_NXP_SE05X) += scp03.c
 srcs-$(CFG_SCMI_PTA) += scmi.c
 srcs-$(CFG_HWRNG_PTA) += hwrng.c
 
+srcs-$(CFG_ATTESTATION_PTA) += attestation.c
+
 subdirs-y += bcm

@@ -34,6 +34,7 @@ srcs-y += user_ta.c
 srcs-$(CFG_REE_FS_TA) += ree_fs_ta.c
 srcs-$(CFG_EARLY_TA) += early_ta.c
 srcs-$(CFG_SECSTOR_TA) += secstor_ta.c
+srcs-$(CFG_REE_FS_TA) += attestation_ta.c
 endif
 
 srcs-$(CFG_EMBEDDED_TS) += embedded_ts.c
