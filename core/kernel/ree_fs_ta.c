@@ -55,6 +55,8 @@
 #include <tee/uuid.h>
 #include <utee_defines.h>
 
+#include <kernel/attestation_ta.h>
+
 struct ree_fs_ta_handle {
 	struct shdr *nw_ta; /* Non-secure (shared memory) */
 	size_t nw_ta_size;
@@ -332,8 +334,14 @@ static TEE_Result check_digest(struct ree_fs_ta_handle *h)
 		res = TEE_ERROR_SECURITY;
 		goto out;
 	}
-	if (memcmp(digest, SHDR_GET_HASH(h->shdr), h->shdr->hash_size))
+	if (memcmp(digest, SHDR_GET_HASH(h->shdr), h->shdr->hash_size)) {
 		res = TEE_ERROR_SECURITY;
+		goto out;
+	}
+
+	//TODO handle result? What if we get some error?
+	res = add_ree_fs_ta_hash(h->bs_hdr->uuid, digest);
+
 out:
 	free(digest);
 	return res;

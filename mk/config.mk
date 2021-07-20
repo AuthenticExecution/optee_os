@@ -572,6 +572,9 @@ $(eval $(call cfg-depends-all,CFG_SYSTEM_PTA,CFG_WITH_USER_TA))
 # world OS.
 CFG_DEVICE_ENUM_PTA ?= y
 
+# Enable the pseudo TA for remote attestation.
+CFG_ATTESTATION_PTA ?= y
+
 # Define the number of cores per cluster used in calculating core position.
 # The cluster number is shifted by this value and added to the core ID,
 # so its value represents log2(cores/cluster).
