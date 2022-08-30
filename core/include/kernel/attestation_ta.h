@@ -6,6 +6,7 @@
 
 #define HASH_SIZE TEE_SHA256_HASH_SIZE // 32
 #define TA_KEY_SIZE 16 // should be <= HASH_SIZE
+#define VENDOR_ID_SIZE 2
 
 TEE_Result add_ree_fs_ta_hash(uint8_t *uuid, void *hash);
 TEE_Result get_ree_fs_ta_hash(TEE_UUID *uuid, void *result);

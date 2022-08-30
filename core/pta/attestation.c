@@ -62,40 +62,46 @@ err:
 
 static TEE_Result attestation(uint32_t type, TEE_Param p[TEE_NUM_PARAMS])
 {
-	uint32_t exp_pt = TEE_PARAM_TYPES(TEE_PARAM_TYPE_MEMREF_OUTPUT,
-					  TEE_PARAM_TYPE_NONE, TEE_PARAM_TYPE_NONE,
+	uint32_t exp_pt = TEE_PARAM_TYPES(TEE_PARAM_TYPE_MEMREF_INPUT,
+					  TEE_PARAM_TYPE_MEMREF_OUTPUT, 
+					  TEE_PARAM_TYPE_NONE,
 					  TEE_PARAM_TYPE_NONE);
-	if (exp_pt != type)
+	if (exp_pt != type || p[0].memref.size != VENDOR_ID_SIZE)
 		return TEE_ERROR_BAD_PARAMETERS;
 
 	TEE_Result res = TEE_ERROR_GENERIC;
-	uint8_t src[2 * HASH_SIZE];
+	uint8_t huk_vendor[HASH_SIZE + VENDOR_ID_SIZE];
+	uint8_t vendor_module[2 * HASH_SIZE];
 	uint8_t module_key[HASH_SIZE];
-	uint8_t hardware_unique_key[HASH_SIZE];
-	uint8_t *dst = NULL;
 
-	res = get_hardware_unique_key(hardware_unique_key);
-	memcpy(src, hardware_unique_key, HASH_SIZE);
+	res = get_hardware_unique_key(huk_vendor);
+	if(res)
+		return res;
+
+	uint8_t *vendor_id = (uint8_t *)p[0].memref.buffer;
+	memcpy(huk_vendor + HASH_SIZE, vendor_id, VENDOR_ID_SIZE);
+
+	/* generate the vendor key, from the HUK and vendor ID */
+	res = get_hash(vendor_module, huk_vendor, HASH_SIZE + VENDOR_ID_SIZE);
+	if (res)
+		return res;
 
 	/* get the hash of the calling TA */
-	res = get_ree_fs_ta_hash(&ts_get_calling_session()->ctx->uuid, src + HASH_SIZE);
+	res = get_ree_fs_ta_hash(&ts_get_calling_session()->ctx->uuid, vendor_module + HASH_SIZE);
 
 	if(res) {
 		DMSG("Error in get_ree_fs_ta_hash: %d", res);
 		return res;
 	}
 
-	/* generate the hash over the TA hash and HUK*/
-	res = get_hash(module_key, src, 2 * HASH_SIZE);
+	/* generate the module key from the vendor key and the TA's hash */
+	res = get_hash(module_key, vendor_module, 2 * HASH_SIZE);
 	if (res)
 		return res;
 
-	/* prepare the output */
-	dst = (uint8_t *)p[0].memref.buffer;
-
 	// copy only the first TA_KEY_SIZE bytes
-	p[0].memref.size = TA_KEY_SIZE;
-	memcpy(dst, module_key, TA_KEY_SIZE);
+	p[1].memref.size = TA_KEY_SIZE;
+	memcpy(p[1].memref.buffer, module_key, TA_KEY_SIZE);
 
 	DMSG("---- module key was issued! ----");
 	return TEE_SUCCESS;
